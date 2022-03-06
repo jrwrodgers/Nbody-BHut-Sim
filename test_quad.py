@@ -10,7 +10,7 @@ import math
 
 width=10
 height=10
-nparticles=1000
+nparticles=5
 particles=[]
 scatter_array=np.zeros((nparticles,2))
 qtree_rectangle=[]
@@ -23,7 +23,7 @@ def print_attrs(a):
 def main():
     qtree_rectangle = Rectangle(0, 0, width, height)
  #   print_attrs(qtree_rectangle)
-    qtree=QuadTree(qtree_rectangle, 5, 1)
+    qtree=QuadTree(qtree_rectangle, 1, 1)
 
     for __ in range(nparticles):
          pos=[random()*width-width/2,random()*height-height/2]
@@ -35,12 +35,12 @@ def main():
     # particles.append(Particle([4, 4], [0, 0], 1, 1))
 
     for i in range(len(particles)):
-        point=Point(particles[i].pos_x,particles[i].pos_y,particles[i].mass)
+        point=Point(particles[i].x,particles[i].y,particles[i].mass)
         if DEBUG:print("inserting point", i)
         qtree.insert_point(point,DEBUG)
-        scatter_array[i, 0] = particles[i].pos_x
-        scatter_array[i, 1] = particles[i].pos_y
-
+        scatter_array[i, 0] = particles[i].x
+        scatter_array[i, 1] = particles[i].y
+    qtree.output_tree()
     ## Plot points
     plt.style.use('dark_background')
     fig = plt.figure(figsize=(8, 8), dpi=160)

@@ -1,65 +1,47 @@
 from matplotlib import patches
 import matplotlib.pyplot as plt
 
-def print_attrs(a):
-    attrs = vars(a)
-    print(', '.join("%s: %s" % item for item in attrs.items()))
-
-
 class QuadTree:
     def __init__(self, rectangle, capacity, level):
         self.rectangle = rectangle
         self.capacity = capacity
-        self.cofg_x = 0.0
-        self.cofg_y = 0.0
+        self.cofg_x = self.rectangle.centre_x
+        self.cofg_y = self.rectangle.centre_y
         self.cofg_mx = 0.0
         self.cofg_my = 0.0
         self.mass = 0.0
         self.divided = False
         self.points = []
-        self.npoints=len(self.points)
+        self.npoints = len(self.points)
         self.northeast = []
         self.southeast = []
         self.southwest = []
         self.northwest = []
-        self.level=level
+        self.level = level
 
-
-    def insert_point(self,point,DEBUG):
+    def insert_point(self, point):
 
         if self.rectangle.contains(point):
             if len(self.points) < self.capacity and self.divided == False:
                 self.points.append(point)
                 self.add_node_mass(point)
 
-                if DEBUG:print("inserted point at level ", self.level)
-
             elif len(self.points) == self.capacity and self.divided == False:
-                if DEBUG:print("dividing..")
                 self.points.append(point)
                 self.add_node_mass(point)
                 self.subdivide()
                 for old_point in self.points:
-                    if DEBUG:print("trying ne")
-                    self.northeast.insert_point(old_point,DEBUG)
-                    if DEBUG:print("trying se")
-                    self.southeast.insert_point(old_point,DEBUG)
-                    if DEBUG:print("trying sw")
-                    self.southwest.insert_point(old_point,DEBUG)
-                    if DEBUG:print("trying nw")
-                    self.northwest.insert_point(old_point,DEBUG)
+                    self.northeast.insert_point(old_point)
+                    self.southeast.insert_point(old_point)
+                    self.southwest.insert_point(old_point)
+                    self.northwest.insert_point(old_point)
                 self.points = []
             elif self.divided == True:
-                self.points.append(point)
                 self.add_node_mass(point)
-                if DEBUG:print("trying ne")
-                self.northeast.insert_point(point,DEBUG)
-                if DEBUG:print("trying se")
-                self.southeast.insert_point(point,DEBUG)
-                if DEBUG:print("trying sw")
-                self.southwest.insert_point(point,DEBUG)
-                if DEBUG:print("trying nw")
-                self.northwest.insert_point(point,DEBUG)
+                self.northeast.insert_point(point)
+                self.southeast.insert_point(point)
+                self.southwest.insert_point(point)
+                self.northwest.insert_point(point)
         else:
             return
 
@@ -104,8 +86,8 @@ class QuadTree:
             ax.add_patch(patches.Rectangle((self.rectangle.left, self.rectangle.lower), self.rectangle.width,
                                            self.rectangle.height, edgecolor=cmi[self.level],
                                            facecolor='none', linewidth=1))
-            #ax.add_patch(patches.Circle((self.cofg_x, self.cofg_y), radius=self.rectangle.width / 10, facecolor='none',
-            #                               edgecolor=cmi[self.level]))
+            ax.add_patch(patches.Circle((self.cofg_x, self.cofg_y), radius=self.rectangle.width / 10, facecolor='none',
+                                           edgecolor=cmi[self.level]))
             self.northeast.plot_rectangle(ax)
             self.southeast.plot_rectangle(ax)
             self.southwest.plot_rectangle(ax)
@@ -125,55 +107,84 @@ class QuadTree:
                                            self.rectangle.height, edgecolor=cmi[self.level],
                                            facecolor='none', linewidth=1))
 
-    def theta_bounds(self,theta,point,others):
-        dist=((self.cofg_x-point.x)**2+(self.cog_y-point.y)**2)**0.5
-        check_theta=dist/self.rectangle.width
+    def contains(self, point):
+        if point.x >= self.rectangle.left and point.x < self.rectangle.right and point.y >= self.rectangle.bottom and point.y < self.rectangle.top:
+            return true
+        else:
+            return false
 
-        if theta<=check_theta:
-        #
-        #
-        # elif:
-        #
-        # else:
+    def theta_bounds(self, theta, particle):
+        others = []
+        new_others = []
+        returned_others = []
+        returned_others_ne = []
+        returned_others_se = []
+        returned_others_sw = []
+        returned_others_nw = []
 
-        others.append(self.northeast.theta_bounds(theta, point))
-        others.append(self.southeast.theta_bounds(theta, point))
-        others.append(self.southwest.theta_bounds(theta, point))
-        others.append(self.northwest.theta_bounds(theta, point))
+        dist = ((self.cofg_x - particle.x) ** 2 + (self.cofg_y - particle.y) ** 2) ** 0.5
+        if dist != 0:
+            theta_check = self.rectangle.width / dist
+        else:
+            theta_check = 0
 
-        return others
-    # Start at root node
-    # If this is an internal node (e.g. not divided) add force
-    # Check children
-    # Calculate theta of children
-    # If below theta then add force
-    # If not drop into child and repeat
+        if theta_check >= theta:
+            if len(self.points) != 0:
+                for point in self.points:
+                            if not(point.x == particle.x and point.y == particle.y):
+                                others.append(point)
+            else:
+                if self.divided == True:
+                    returned_others_ne = (self.northeast.theta_bounds(theta, particle))
+                    returned_others_se = (self.southeast.theta_bounds(theta, particle))
+                    returned_others_sw = (self.southwest.theta_bounds(theta, particle))
+                    returned_others_nw = (self.northwest.theta_bounds(theta, particle))
+                    returned_others = returned_others_ne + returned_others_se + returned_others_sw + returned_others_nw
+        else:
+            if self.mass !=0 :
+                others.append(Point(self.cofg_x, self.cofg_y, self.mass))
+
+        new_others = others + returned_others
+        return new_others
+
+    def output_tree(self):
+        print("Tree level", self.level)
+        print("N Points:",len(self.points), "Mass :", self.mass)
+        if self.divided == True:
+            print("NE-->")
+            self.northeast.output_tree()
+            print("SE-->")
+            self.southeast.output_tree()
+            print("SW-->")
+            self.southwest.output_tree()
+            print("NW-->")
+            self.northwest.output_tree()
 
 
 
 class Point:
-    def __init__(self,x,y,m):
-        self.x=x
-        self.y=y
-        self.mass=m
+    def __init__(self, x, y, m):
+        self.x = x
+        self.y = y
+        self.mass = m
 
 
 class Rectangle:
-    def __init__(self,centre_x,centre_y,width,height):
-        self.centre_x=centre_x
-        self.centre_y=centre_y
-        self.width=width
-        self.height=height
+    def __init__(self, centre_x, centre_y, width, height):
+        self.centre_x = centre_x
+        self.centre_y = centre_y
+        self.width = width
+        self.height = height
         self.left = centre_x - width/2
         self.right = centre_x + width/2
         self.lower = centre_y - height/2
         self.upper = centre_y + height/2
 
     def draw(self):
-        lines=[0,0,0,0]
+        lines = [0, 0, 0, 0]
         return lines
 
-    def contains(self,point):
+    def contains(self, point):
         if point.x < self.right and point.x > self.left and point.y < self.upper and point.y > self.lower:
             return True
         else:

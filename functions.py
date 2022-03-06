@@ -9,3 +9,7 @@ def multMs(a, b):
     for i in range(len(a)):
         res.append(a[i]*b)
     return res
+
+def print_attrs(a):
+    attrs = vars(a)
+    print(', '.join("%s: %s" % item for item in attrs.items()))
